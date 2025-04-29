@@ -26,6 +26,11 @@
 	include 'libraries/employees.class.php';
 	include 'libraries/models.class.php';
 	include 'libraries/services.class.php';
+	include 'libraries/Inventory.php';
+	include 'libraries/Category.php';
+	include 'libraries/Product.php';
+	include 'libraries/Warehouse.php';
+	include 'libraries/Manufacturer.php';
 
 	// nustatome pasirinktą modulį
 	$module = '';

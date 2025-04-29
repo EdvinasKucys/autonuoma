@@ -5,7 +5,7 @@
  * @author ISK
  */
 
-class manufacturers {
+class manufacturer {
 	
 	private $manufacturer_table = '';
 	private $product_table = '';

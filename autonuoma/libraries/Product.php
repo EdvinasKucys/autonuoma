@@ -5,7 +5,7 @@
  * @author ISK
  */
 
-class cars {
+class product {
 
 	private $category_table = '';
 	private $product_table = '';
@@ -275,5 +275,20 @@ class cars {
 		//
 		return $data;
 	}
-	
+		/**
+	 * Patikrinama, ar sutartis su nurodytu numeriu egzistuoja
+	 * @param type $id
+	 * @return type
+	 */
+	public function checkIfProductidExists($id) {
+		$id = mysql::escapeFieldForSQL($id);
+
+		$query = "SELECT COUNT(`{$this->product_table}`.`id`) AS `kiekis`
+				FROM `{$this->product_table}`
+				WHERE `{$this->product_table}`.`id`='{$id}'";
+		$data = mysql::select($query);
+
+		//
+		return $data[0]['kiekis'];
+	}
 }

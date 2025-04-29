@@ -6,7 +6,7 @@
  * @author ISK
  */
 
-class brands {
+class category {
 	
 	private $category_table = '';
 	private $product_table = '';
