@@ -45,14 +45,10 @@
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                        <li class="nav-item"><a class="nav-link <?php if($module == 'contract_f2') { echo 'active'; } ?>" aria-current="page" href="index.php?module=contract_f2&action=list">Sutartys F2</a></li>
-                        <li class="nav-item"><a class="nav-link <?php if($module == 'service') { echo 'active'; } ?>" href="index.php?module=service&action=list">Paslaugos</a></li>
-                        <li class="nav-item"><a class="nav-link <?php if($module == 'customer') { echo 'active'; } ?>" href="index.php?module=customer&action=list">Klientai</a></li>
-                        <li class="nav-item"><a class="nav-link <?php if($module == 'employee') { echo 'active'; } ?>" href="index.php?module=employee&action=list">Darbuotojai</a></li>
+
                         <li class="nav-item"><a class="nav-link <?php if($module == 'car') { echo 'active'; } ?>" href="index.php?module=car&action=list">Automobiliai</a></li>
                         <li class="nav-item"><a class="nav-link <?php if($module == 'brand') { echo 'active'; } ?>" href="index.php?module=brand&action=list">Markės</a></li>
-                        <li class="nav-item"><a class="nav-link <?php if($module == 'model') { echo 'active'; } ?>" href="index.php?module=model&action=list">Modeliai</a></li>
-                        <li class="nav-item"><a class="nav-link <?php if($module == 'report') { echo 'active'; } ?>" href="index.php?module=report&action=list">Ataskaitos</a></li>
+
                     </ul>
                 </div>
             </div>

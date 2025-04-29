@@ -1,18 +1,19 @@
+
 <?php
 /**
- * Automobilių markių redagavimo klasė
+ * Prekiu kategoriju redagavimo klasė
  *
  * @author ISK
  */
 
-class categories {
+class brands {
 	
-	private $markes_lentele = '';
-	private $modeliai_lentele = '';
+	private $category_table = '';
+	private $product_table = '';
 	
 	public function __construct() {
-		$this->markes_lentele = config::DB_PREFIX . 'markes';
-		$this->modeliai_lentele = config::DB_PREFIX . 'modeliai';
+		$this->category_table = config::DB_PREFIX . 'kategorija';
+		$this->product_table = config::DB_PREFIX . 'preke';
 	}
 	
 	/**
@@ -20,11 +21,12 @@ class categories {
 	 * @param type $id
 	 * @return type
 	 */
-	public function getBrand($id) {
+	public function getCategory($id) {
 		$id = mysql::escapeFieldForSQL($id);
 
 		$query = "SELECT *
-				FROM {$this->markes_lentele}
+				FROM {$this->category_table
+		}
 				WHERE `id`='{$id}'";
 		$data = mysql::select($query);
 		
@@ -38,7 +40,7 @@ class categories {
 	 * @param type $offset
 	 * @return type
 	 */
-	public function getBrandList($limit = null, $offset = null) {
+	public function getCategoryList($limit = null, $offset = null) {
 		if($limit) {
 			$limit = mysql::escapeFieldForSQL($limit);
 		}
@@ -56,7 +58,8 @@ class categories {
 		}
 		
 		$query = "SELECT *
-				FROM {$this->markes_lentele}
+				FROM {$this->category_table
+		}
 				{$limitOffsetString}";
 		$data = mysql::select($query);
 		
@@ -68,9 +71,10 @@ class categories {
 	 * Markių kiekio radimas
 	 * @return type
 	 */
-	public function getBrandListCount() {
-		$query = "SELECT COUNT(`id`) as `kiekis`
-				FROM {$this->markes_lentele}";
+	public function getCategoryListCount() {
+		$query = "SELECT COUNT(`id_KATEGORIJA`) as `kiekis`
+				FROM {$this->category_table
+		}";
 		$data = mysql::select($query);
 		
 		// 
@@ -81,12 +85,13 @@ class categories {
 	 * Markės įrašymas
 	 * @param type $data
 	 */
-	public function insertBrand($data) {
+	public function insertategory($data) {
 		$data = mysql::escapeFieldsArrayForSQL($data);
 
-		$query = "INSERT INTO {$this->markes_lentele}
-						  (`pavadinimas`)
-				VALUES      ('{$data['pavadinimas']}')";
+		$query = "INSERT INTO {$this->category_table
+}
+						  (`pavadinimas`, 'aprasymas')
+				VALUES      ('{$data['pavadinimas']}', '{$data['aprasymas']}')";
 		mysql::query($query);
 	}
 	
@@ -97,8 +102,11 @@ class categories {
 	public function updateBrand($data) {
 		$data = mysql::escapeFieldsArrayForSQL($data);
 
-		$query = "UPDATE {$this->markes_lentele}
-				SET `pavadinimas`='{$data['pavadinimas']}'
+		$query = "UPDATE {$this->category_table
+}
+				SET 
+				`pavadinimas`='{$data['pavadinimas']}',
+				`aprasymas`='{$data['aprasymas']}'
 				WHERE `id`='{$data['id']}'";
 		mysql::query($query);
 	}
@@ -110,8 +118,9 @@ class categories {
 	public function deleteBrand($id) {
 		$id = mysql::escapeFieldForSQL($id);
 
-		$query = "DELETE FROM {$this->markes_lentele}
-				WHERE `id`='{$id}'";
+		$query = "DELETE FROM {$this->category_table
+}
+				WHERE `id_KATEGORIJA`='{$id}'";
 		mysql::query($query);
 	}
 	
@@ -120,14 +129,17 @@ class categories {
 	 * @param type $id
 	 * @return type
 	 */
-	public function getModelCountOfBrand($id) {
+	public function getProductCountOfCategory($id) {
 		$id = mysql::escapeFieldForSQL($id);
 
-		$query = "SELECT COUNT({$this->modeliai_lentele}.`id`) AS `kiekis`
-				FROM {$this->markes_lentele}
-					INNER JOIN {$this->modeliai_lentele}
-						ON {$this->markes_lentele}.`id`={$this->modeliai_lentele}.`fk_marke`
-				WHERE {$this->markes_lentele}.`id`='{$id}'";
+		$query = "SELECT COUNT({$this->product_table}.`id`) AS `kiekis`
+				FROM {$this->category_table
+		}
+					INNER JOIN {$this->product_table}
+						ON {$this->category_table
+				}.`id_KATEGORIJA`={$this->product_table}.`fk_KATEGORIJAid_KATEGORIJA`
+				WHERE {$this->category_table
+		}.`id`='{$id}'";
 		$data = mysql::select($query);
 		
 		//
