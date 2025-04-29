@@ -61,4 +61,11 @@
 			Atidaryti
 		</a>
 	</div>
+	<div class="feature col">
+		<h2>Prkes</h2>
+		<p>Sutarčių ir teikiamų paslaugų ataskaita.</p>
+		<a href="index.php?module=Preke&action=list" class="btn btn-dark">
+			Atidaryti
+		</a>
+	</div>
 </div>

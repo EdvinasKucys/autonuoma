@@ -1,32 +1,36 @@
 <?php
+
 /**
  * Juvelyrikos sandėliuojamų prekių redagavimo klasė
  *
  * @author ISK
  */
 
-class inventory {
-	
+class inventory
+{
+
 	private $inventorized_product_table = '';
 	private $product_table = '';
 	private $warehouse_table = '';
 	private $category_table = '';
 	private $manufacturer_table = '';
-	
-	public function __construct() {
+
+	public function __construct()
+	{
 		$this->inventorized_product_table = config::DB_PREFIX . 'sandeliuojama_preke';
 		$this->product_table = config::DB_PREFIX . 'preke';
 		$this->warehouse_table = config::DB_PREFIX . 'sandelis';
 		$this->category_table = config::DB_PREFIX . 'kategorija';
 		$this->manufacturer_table = config::DB_PREFIX . 'gamintojas';
 	}
-	
+
 	/**
 	 * Sandėliuojamos prekės išrinkimas
 	 * @param type $id
 	 * @return type
 	 */
-	public function getInventoryItem($id) {
+	public function getInventoryItem($id)
+	{
 		$id = mysql::escapeFieldForSQL($id);
 
 		$query = "SELECT `{$this->inventorized_product_table}`.`id_SANDELIUOJAMA_PREKE`,
@@ -42,34 +46,35 @@ class inventory {
 						ON `{$this->inventorized_product_table}`.`fk_SANDELISsandelio_id`=`{$this->warehouse_table}`.`sandelio_id`
 				WHERE `{$this->inventorized_product_table}`.`id_SANDELIUOJAMA_PREKE`='{$id}'";
 		$data = mysql::select($query);
-		
+
 		//
 		return $data[0];
 	}
-	
+
 	/**
 	 * Sandėliuojamų prekių sąrašo išrinkimas
 	 * @param type $limit
 	 * @param type $offset
 	 * @return type
 	 */
-	public function getInventoryList($limit = null, $offset = null) {
-		if($limit) {
+	public function getInventoryList($limit = null, $offset = null)
+	{
+		if ($limit) {
 			$limit = mysql::escapeFieldForSQL($limit);
 		}
-		if($offset) {
+		if ($offset) {
 			$offset = mysql::escapeFieldForSQL($offset);
 		}
 
 		$limitOffsetString = "";
-		if(isset($limit)) {
+		if (isset($limit)) {
 			$limitOffsetString .= " LIMIT {$limit}";
-			
-			if(isset($offset)) {
+
+			if (isset($offset)) {
 				$limitOffsetString .= " OFFSET {$offset}";
-			}	
+			}
 		}
-		
+
 		$query = "SELECT `{$this->inventorized_product_table}`.`id_SANDELIUOJAMA_PREKE`,
 					  `{$this->inventorized_product_table}`.`kiekis`,
 					  `{$this->product_table}`.`id` AS `prekes_id`,
@@ -89,7 +94,7 @@ class inventory {
 						ON `{$this->product_table}`.`fk_GAMINTOJASgamintojo_id`=`{$this->manufacturer_table}`.`gamintojo_id`
 				{$limitOffsetString}";
 		$data = mysql::select($query);
-		
+
 		//
 		return $data;
 	}
@@ -98,37 +103,57 @@ class inventory {
 	 * Sandėliuojamų prekių kiekio radimas
 	 * @return type
 	 */
-	public function getInventoryListCount() {
+	public function getInventoryListCount()
+	{
 		$query = "SELECT COUNT(`{$this->inventorized_product_table}`.`id_SANDELIUOJAMA_PREKE`) as `kiekis`
 				FROM `{$this->inventorized_product_table}`";
 		$data = mysql::select($query);
-		
+
 		// 
 		return $data[0]['kiekis'];
 	}
-	
+
 	/**
 	 * Sandėliuojamos prekės įrašymas
 	 * @param type $data
 	 */
-	public function insertInventoryItem($data) {
+	public function insertWarehouseProduct($data)
+	{
 		$data = mysql::escapeFieldsArrayForSQL($data);
+		
+		$checkQuery = "SELECT `id_SANDELIUOJAMA_PREKE` FROM `{$this->inventorized_product_table}`
+                  WHERE `fk_PREKEid`='{$data['fk_PREKEid']}' AND `fk_SANDELISsandelio_id`='{$data['fk_SANDELISsandelio_id']}'";
+		$existingRecords = mysql::select($checkQuery);
 
-		$query = "INSERT INTO `{$this->inventorized_product_table}`
-						  (`kiekis`,
-						   `fk_SANDELISsandelio_id`,
-						   `fk_PREKEid`)
-				VALUES      ('{$data['kiekis']}',
-						  '{$data['fk_SANDELISsandelio_id']}',
-						  '{$data['fk_PREKEid']}')";
-		mysql::query($query);
+		if (!empty($existingRecords)) {
+			// If product already exists in this warehouse, update the quantity
+			$existingId = $existingRecords[0]['id_SANDELIUOJAMA_PREKE'];
+
+			$updateQuery = "UPDATE `{$this->inventorized_product_table}`
+                       SET `kiekis` = `kiekis` + {$data['kiekis']} 
+                       WHERE `id_SANDELIUOJAMA_PREKE`='{$existingId}'";
+
+			mysql::query($updateQuery);
+		} else {
+			// If product doesn't exist in this warehouse, create a new record
+			$insertQuery = "INSERT INTO `{$this->inventorized_product_table}`
+                      (`kiekis`,
+                       `fk_SANDELISsandelio_id`,
+                       `fk_PREKEid`)
+                VALUES ('{$data['kiekis']}',
+                       '{$data['fk_SANDELISsandelio_id']}',
+                       '{$data['fk_PREKEid']}')";
+
+			mysql::query($insertQuery);
+		}
 	}
-	
+
 	/**
 	 * Sandėliuojamos prekės atnaujinimas
 	 * @param type $data
 	 */
-	public function updateInventoryItem($data) {
+	public function updateInventoryItem($data)
+	{
 		$data = mysql::escapeFieldsArrayForSQL($data);
 
 		$query = "UPDATE `{$this->inventorized_product_table}`
@@ -138,55 +163,59 @@ class inventory {
 				WHERE `id_SANDELIUOJAMA_PREKE`='{$data['id_SANDELIUOJAMA_PREKE']}'";
 		mysql::query($query);
 	}
-	
+
 	/**
 	 * Sandėliuojamos prekės šalinimas
 	 * @param type $id
 	 */
-	public function deleteInventoryItem($id) {
+	public function deleteInventoryItem($id)
+	{
 		$id = mysql::escapeFieldForSQL($id);
 
 		$query = "DELETE FROM `{$this->inventorized_product_table}`
 				WHERE `id_SANDELIUOJAMA_PREKE`='{$id}'";
 		mysql::query($query);
 	}
-	
+
 	/**
 	 * Prekių sąrašo išrinkimas
 	 * @return type
 	 */
-	public function getProductList() {
+	public function getProductList()
+	{
 		$query = "SELECT `id`, `pavadinimas`
 				FROM `{$this->product_table}`
 				ORDER BY `pavadinimas` ASC";
 		$data = mysql::select($query);
-		
+
 		//
 		return $data;
 	}
-	
+
 	/**
 	 * Sandėlių sąrašo išrinkimas
 	 * @return type
 	 */
-	public function getWarehouseList() {
+	public function getWarehouseList()
+	{
 		$query = "SELECT `sandelio_id`, `pavadinimas`
 				FROM `{$this->warehouse_table}`
 				ORDER BY `pavadinimas` ASC";
 		$data = mysql::select($query);
-		
+
 		//
 		return $data;
 	}
-	
+
 	/**
 	 * Tam tikros prekės sandėliuojamų vienetų išrinkimas
 	 * @param type $productId
 	 * @return type
 	 */
-	public function getProductInventory($productId) {
+	public function getProductInventory($productId)
+	{
 		$productId = mysql::escapeFieldForSQL($productId);
-		
+
 		$query = "SELECT `{$this->inventorized_product_table}`.`id_SANDELIUOJAMA_PREKE`,
 					  `{$this->inventorized_product_table}`.`kiekis`,
 					  `{$this->inventorized_product_table}`.`fk_SANDELISsandelio_id`,
@@ -196,41 +225,43 @@ class inventory {
 						ON `{$this->inventorized_product_table}`.`fk_SANDELISsandelio_id`=`{$this->warehouse_table}`.`sandelio_id`
 				WHERE `{$this->inventorized_product_table}`.`fk_PREKEid`='{$productId}'";
 		$data = mysql::select($query);
-		
+
 		//
 		return $data;
 	}
-	
+
 	/**
 	 * Tam tikros prekės bendrų sandėliuojamų vienetų kiekio radimas
 	 * @param type $productId
 	 * @return type
 	 */
-	public function getTotalProductCount($productId) {
+	public function getTotalProductCount($productId)
+	{
 		$productId = mysql::escapeFieldForSQL($productId);
-		
+
 		$query = "SELECT SUM(`kiekis`) AS `viso`
 				FROM `{$this->inventorized_product_table}`
 				WHERE `fk_PREKEid`='{$productId}'";
 		$data = mysql::select($query);
-		
+
 		//
 		return $data[0]['viso'];
 	}
-	
+
 	/**
 	 * Prekių, kurios yra tam tikrame sandėlyje, kiekio radimas
 	 * @param type $warehouseId
 	 * @return type
 	 */
-	public function getProductCountInWarehouse($warehouseId) {
+	public function getProductCountInWarehouse($warehouseId)
+	{
 		$warehouseId = mysql::escapeFieldForSQL($warehouseId);
-		
+
 		$query = "SELECT COUNT(`id_SANDELIUOJAMA_PREKE`) AS `kiekis`
 				FROM `{$this->inventorized_product_table}`
 				WHERE `fk_SANDELISsandelio_id`='{$warehouseId}'";
 		$data = mysql::select($query);
-		
+
 		//
 		return $data[0]['kiekis'];
 	}

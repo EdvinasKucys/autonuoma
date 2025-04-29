@@ -5,17 +5,17 @@
  * @author YourName
  */
 
-class sandelis {
+class Warehouse {
     
     private $warehouse_table = '';
     private $product_table = '';
 
-    private $inventorius_lentele = '';
+    private $inventorized_product_table = '';
     
     public function __construct() {
         $this->warehouse_table = config::DB_PREFIX . 'sandeliai';
         $this->product_table = config::DB_PREFIX . 'prekes';
-        $this->inventorius_lentele = config::DB_PREFIX . 'inventorius';
+        $this->inventorized_product_table = config::DB_PREFIX . 'inventorius';
     }
     
     /**
@@ -93,6 +93,37 @@ class sandelis {
         return $data;
     }
     
+    public function insertWarehouseProduct($data)
+	{
+		$data = mysql::escapeFieldsArrayForSQL($data);
+		
+		$checkQuery = "SELECT `id_SANDELIUOJAMA_PREKE` FROM `{$this->inventorized_product_table}`
+                  WHERE `fk_PREKEid`='{$data['fk_PREKEid']}' AND `fk_SANDELISsandelio_id`='{$data['fk_SANDELISsandelio_id']}'";
+		$existingRecords = mysql::select($checkQuery);
+
+		if (!empty($existingRecords)) {
+			// If product already exists in this warehouse, update the quantity
+			$existingId = $existingRecords[0]['id_SANDELIUOJAMA_PREKE'];
+
+			$updateQuery = "UPDATE `{$this->inventorized_product_table}`
+                       SET `kiekis` = `kiekis` + {$data['kiekis']} 
+                       WHERE `id_SANDELIUOJAMA_PREKE`='{$existingId}'";
+
+			mysql::query($updateQuery);
+		} else {
+			// If product doesn't exist in this warehouse, create a new record
+			$insertQuery = "INSERT INTO `{$this->inventorized_product_table}`
+                      (`kiekis`,
+                       `fk_SANDELISsandelio_id`,
+                       `fk_PREKEid`)
+                VALUES ('{$data['kiekis']}',
+                       '{$data['fk_SANDELISsandelio_id']}',
+                       '{$data['fk_PREKEid']}')";
+
+			mysql::query($insertQuery);
+		}
+	}
+
     /**
      * Sandėlio atnaujinimas
      * @param type $data

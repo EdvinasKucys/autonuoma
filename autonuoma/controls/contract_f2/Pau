@@ -1,0 +1,92 @@
+<?php
+	
+// sukuriame užklausų klasių objektus
+$prekesObj = new Prekes();
+$sandeliaiObj = new Sandeliai();
+$gamintojaiObj = new Gamintojai();
+
+
+$formErrors = null;
+$data = array();
+$data['sandelio_prekes'] = array();
+
+// nustatome privalomus laukus
+$required = array('pavadinimas', 'kaina', 'busena', 'gamintojas', 'aprasymas', 'prekes_rusis', 'fk_Gamintojasid_Gamintojas');
+
+// maksimalūs leidžiami laukų ilgiai
+$maxLengths = array (
+	'pavadinimas' => 100,
+    'kaina' => 10,
+    'busena'=> 50,
+	'gamintojas'=> 100,
+	'prekes_rusis'=> 100,
+	'aprasymas'=> 255,
+	'fk_Gamintojasid_Gamintojas'=> 255,
+);
+
+// paspaustas išsaugojimo mygtukas
+if(!empty($_POST['submit'])) {
+	// nustatome laukų validatorių tipus
+	$validations = array (
+		'pavadinimas' => 'anything',
+		'kaina' => 'price',
+        'busena'=> 'anything',
+		'gamintojas'=> 'anything',
+		'prekes_rusis'=> 'anything',
+		'aprasymas'=> 'anything',
+		'fk_Gamintojasid_Gamintojas'=> 'positivenumber',
+		'kiekis'=> 'manoamount',
+    );
+	
+	// sukuriame laukų validatoriaus objektą
+	$validator = new validator($validations, $required);
+
+	// laukai įvesti be klaidų
+	if($validator->validate($_POST)) {
+		// įrašome naują sutartį
+		$prekesID = $prekesObj->insertPreke($_POST);
+
+		// įrašome užsakytas paslaugas
+		foreach($_POST['sandelis'] as $keyForm => $sandelisForm) {
+
+			// gauname paslaugos id, galioja nuo ir kaina reikšmes {$price['fk_paslauga']}#{$price['galioja_nuo']}}
+			
+			$sandelisId = $sandelisForm;
+
+			$sandeliaiObj->insertSandelioPrekes($prekesID, $sandelisId, $_POST['kiekis'][$keyForm]);
+		}
+
+		// nukreipiame vartotoją į sutarčių puslapį
+		if($formErrors == null) {
+			common::redirect("index.php?module={$module}&action=list");
+			die();
+		}
+	} else {
+		// gauname klaidų pranešimą
+		$formErrors = $validator->getErrorHTML();
+
+		// laukų reikšmių kintamajam priskiriame įvestų laukų reikšmes
+		$data = $_POST;
+
+		$data['sandelio_prekes'] = array();
+		if(isset($_POST['sandelis'])) {
+			$i = 0;
+			foreach($_POST['sandelis'] as $key => $val) {
+				// gauname paslaugos id, galioja nuo ir kaina reikšmes {$price['fk_paslauga']}#{$price['galioja_nuo']}
+				
+				$sandelisId = $val;
+				
+				$data['sandelio_prekes'][$i]['fk_Prekeid_Preke'] = $sandelisId;
+				$data['sandelio_prekes'][$i]['kiekis'] = $_POST['kiekis'][$key];
+
+				$i++;
+			}
+		}
+	}
+}
+array_unshift($data['sandelio_prekes'], array());
+
+// įtraukiame šabloną
+include "templates/{$module}/{$module}_form.tpl.php";
+
+?>

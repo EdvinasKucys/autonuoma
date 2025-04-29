@@ -4,17 +4,27 @@
 $productObj = new product();
 $manufacturerObj = new manufacturer();
 $categoryObj = new category();
-$inventoryObj = new inventory();
+$warehouseObj = new Warehouse();
 
 $formErrors = null;
 $data = array();
-$data['prekes'] = array();
+$data['warehousedProducts'] = array();
 
 // nustatome privalomus laukus
-$required = array('id', 'pavadinimas', 'kaina', 'svoris', 'fk_GAMINTOJASgamintojo_id', 'fk_KATEGORIJAid_KATEGORIJA', 'kiekiai');
+$required = array('id', 'pavadinimas', 'kaina', 'svoris', 'fk_GAMINTOJASgamintojo_id', 'fk_KATEGORIJAid_KATEGORIJA');
 // vartotojas paspaudė išsaugojimo mygtuką
 if(!empty($_POST['submit'])) {
     // Define field validation types
+	$maxLengths = array (
+		'pavadinimas' => 200,
+		'aprasymas'=> 255,
+		'id'=> 64,
+		'medziaga'=> 100,
+		'aprasymas'=> 255,
+		'fk_GAMINTOJASgamintojo_ids'=> 64,
+		'fk_KATEGOTIJAid_KATEGORIJA'=> 11,
+	);
+
     $validations = array (
         'id' => 'alfanum',
         'pavadinimas' => 'anything',
@@ -23,9 +33,9 @@ if(!empty($_POST['submit'])) {
         'svoris' => 'float',
         'medziaga' => 'anything',
         'fk_GAMINTOJASgamintojo_id' => 'alfanum',
-        'fk_KATEGORIJAid_KATEGORIJA' => 'positivenumber',
-        'sandelio_id' => 'alfanum',
-        'kiekis' => 'int'
+        'fk_KATEGORIJAid_KATEGORIJA' => 'alfanum',
+		'sandelis' => 'anything',
+		'kiekis' => 'int'
     );
 	
 	// sukuriame laukų validatoriaus objektą
@@ -35,6 +45,9 @@ if(!empty($_POST['submit'])) {
 	if($validator->validate($_POST)) {
 		// patikriname, ar nėra sutarčių su tokiu pačiu numeriu
 		$kiekis = $productObj->checkIfProductidExists($_POST['id']);
+		
+		$productid = $productObj->insertProduct($_POST);
+
 
 		if($kiekis > 0) {
 			// sudarome klaidų pranešimą
@@ -43,15 +56,17 @@ if(!empty($_POST['submit'])) {
 			$data = $_POST;
 		} else {
 			// įrašome naują sutartį
-			$productObj->insertProduct($_POST);
+			$productid = $productObj->insertProduct($_POST);
 
 			// įrašome užsakytas paslaugas
-			foreach($_POST['sandelis'] as $keyForm => $sandelisForm) {
+			foreach($_POST['sandelis'] as $keyForm => $warehouseForm) {
 
 				// gauname paslaugos id, galioja nuo ir kaina reikšmes {$price['fk_paslauga']}#{$price['galioja_nuo']}
-				$sandelioId = $sandelisForm;
-				$inventorytObj->insertInventoryItem($_POST['nr'], $serviceId, $priceFrom, $_POST['paslaugos_kaina'][$keyForm], $_POST['paslaugos_kiekis'][$keyForm]);
+				$warehouseId = $warehouseForm;
+
+				$inventorytObj->insertInventoryItem($productId, $warehouseId, $_POST['kiekis'][$keyForm]);
 			}
+			
 		}
 
 		// nukreipiame vartotoją į sutarčių puslapį
@@ -66,20 +81,16 @@ if(!empty($_POST['submit'])) {
 		// laukų reikšmių kintamajam priskiriame įvestų laukų reikšmes
 		$data = $_POST;
 
-		$data['uzsakytos_paslaugos'] = array();
-		if(isset($_POST['paslauga'])) {
+		$data['warehousedProducts'] = array();
+		if(isset($_POST['sandelis'])) {
 			$i = 0;
-			foreach($_POST['paslauga'] as $key => $val) {
+			foreach($_POST['sandelis'] as $key => $val) {
 				// gauname paslaugos id, galioja nuo ir kaina reikšmes {$price['fk_paslauga']}#{$price['galioja_nuo']}
-				$tmp = explode("#", $val);
 				
-				$serviceId = $tmp[0];
-				$priceFrom = $tmp[1];
+				$warehouseId = $val;
 				
-				$data['uzsakytos_paslaugos'][$i]['fk_paslauga'] = $serviceId;
-				$data['uzsakytos_paslaugos'][$i]['fk_kaina_galioja_nuo'] = $priceFrom;
-				$data['uzsakytos_paslaugos'][$i]['kaina'] = $_POST['paslaugos_kaina'][$key];
-				$data['uzsakytos_paslaugos'][$i]['kiekis'] = $_POST['paslaugos_kiekis'][$key];
+				$data['warehousedProducts'][$i]['fk_Prekeid'] = $warehouseid;
+				$data['warehousedProducts'][$i]['kiekis'] =  $_POST['kiekis'][$key];
 
 				$i++;
 			}
@@ -90,7 +101,7 @@ if(!empty($_POST['submit'])) {
 // į užsakytų paslaugų masyvo pradžią įtraukiame tuščią reikšmę, kad užsakytų paslaugų formoje
 // būtų visada išvedami paslėpti formos laukai, kuriuos galėtume kopijuoti ir pridėti norimą
 // kiekį paslaugų
-array_unshift($data['uzsakytos_paslaugos'], array());
+array_unshift($data['warehousedProducts'], array());
 
 // įtraukiame šabloną
 include "templates/{$module}/{$module}_form.tpl.php";
